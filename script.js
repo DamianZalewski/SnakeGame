@@ -7,8 +7,8 @@
  window.addEventListener("keydown", control, false);
 
  var snake = {
-     x:cw/2,
-     y:ch/2,
+     x: cw / 2,
+     y: ch / 2,
      width: 20,
      height: 20,
      backgroundColor: "blue",
@@ -18,9 +18,20 @@
 
  };
 
+ var apple = {
+     x: 1,
+     y: 1,
+     width: 10,
+     height: 10,
+
+ }
+
+ var apples = [];
+
  var path = [[cw / 2, ch / 2], [cw / 2 - snake.width, ch / 2], [cw / 2 - 2 * snake.width, ch / 2], [cw / 2 - 3 * snake.width, ch / 2]];
 
  setInterval(game, 1000 / 60);
+ setInterval(addApple, 5000);
 
  function control(e) {
 
@@ -35,6 +46,8 @@
  function game() {
      gameBoard();
      snakeMove();
+     
+     drawApple();
      drawSnake();
 
  }
@@ -47,7 +60,7 @@
      if (snake.x > cw) path[0][0] = -snake.width;
      if (snake.y < -snake.height) path[0][1] = ch - snake.height;
      if (snake.y > ch) path[0][1] = -snake.height;
-     
+
 
      for (var i = snake.length - 1; i > 0; i--) {
          path[i][0] = path[i - 1][0];
@@ -61,11 +74,6 @@
      if (snake.direction == 4) path[0][1] += snake.speed;
      snake.x = path[0][0];
      snake.y = path[0][1];
-  
-     
-
-
-
 
  }
 
@@ -80,3 +88,19 @@
      ctx.fillStyle = "black";
      ctx.fillRect(0, 0, cw, ch);
  }
+
+ function addApple() {
+     apple.x = Math.floor(Math.random() * cw);
+     apple.y = Math.floor(Math.random() * ch);
+     var tab = [apple.x, apple.y];
+     apples.push(tab);
+
+ }
+
+function drawApple()
+{
+     ctx.fillStyle = "#ff0000";
+    for(var i=0;i<apples.length;i++)
+        ctx.fillRect(apples[i][0], apples[i][1], apple.width, apple.height);
+        
+}
