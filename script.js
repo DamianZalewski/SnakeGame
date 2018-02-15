@@ -4,17 +4,16 @@
  canvas.height = screen.height;
  var cw = canvas.width;
  var ch = canvas.height;
- window.addEventListener("keydown", control, false);
-
+ var score = 0;
+ var stage = 0; // 0 - start, 1 - init, 2 - game, 3 - end
  var snake = {
      x: cw / 2,
      y: ch / 2,
-     width: 20,
-     height: 20,
-     backgroundColor: "blue",
+     width: 15,
+     height: 15,
+     backgroundColor: "green",
      direction: 3,
-     speed: 5,
-     length: 4,
+     length: 5,
 
  };
 
@@ -28,29 +27,172 @@
 
  var apples = [];
 
- var path = [[cw / 2, ch / 2], [cw / 2 - snake.width, ch / 2], [cw / 2 - 2 * snake.width, ch / 2], [cw / 2 - 3 * snake.width, ch / 2]];
+ var path = [[cw / 2 + 2 * snake.width, ch / 2],
+             [cw / 2 + snake.width, ch / 2],
+             [cw / 2, ch / 2],
+             [cw / 2 - snake.width, ch / 2],
+             [cw / 2 - 2 * snake.width, ch / 2]];
 
- setInterval(game, 1000 / 60);
- setInterval(addApple, 5000);
+ setInterval(game, 40);
+
+ addApple();
 
  function control(e) {
 
      var key = e.keyCode;
-     if (key == 37) snake.direction = 1; //left
-     if (key == 38) snake.direction = 2; //up
-     if (key == 39) snake.direction = 3; //right
-     if (key == 40) snake.direction = 4; //down
+     if (key == 37 && snake.direction != 3) snake.direction = 1; else//left
+     if (key == 38 && snake.direction != 4) snake.direction = 2;else//up
+     if (key == 39 && snake.direction != 1) snake.direction = 3; else//right
+     if (key == 40 && snake.direction != 2) snake.direction = 4; //down
  }
+
+
 
 
  function game() {
-     gameBoard();
-     snakeMove();
-     
-     drawApple();
-     drawSnake();
+     switch (stage) {
+         case 0:
+             window.addEventListener("keydown", startGame, false);
+             gameBoard();
+             drawSnake();
+             startMenuText();
+             break;
+         case 1:
+
+             window.addEventListener("keydown", control, false);
+             setInterval(addApple, 3000);
+             stage = 2;
+             break;
+         case 2:
+             gameBoard();
+             showScore();
+             snakeMove();
+             snakeCollision();
+             appleCollision();
+             drawApple();
+             drawSnake();
+             break;
+         case 3:
+             gameBoard();
+             gameOver();
+             clearInterval(addApple);
+             window.removeEventListener("keydown", control);
+             window.addEventListener("keydown", startGameAgain, false);
+             break;
+
+     }
+
 
  }
+
+
+ function startGameAgain(e) {
+
+     if (e.keyCode == 13) {
+         stage = 0;
+         window.removeEventListener("keydown", startGameAgain);
+     }
+
+ }
+
+ function gameOver() {
+     ctx.fillStyle = "red";
+     ctx.font = "40px Arial";
+     ctx.textAlign = "center";
+     ctx.fillText("GAME OVER", cw / 2, 150);
+     ctx.fillText("SCORE : " + score, cw / 2, 250);
+     ctx.fillText("PRESS ENTER TO START AGAIN!", cw / 2, 550);
+ }
+
+ function startMenuText() {
+     ctx.fillStyle = "white";
+     ctx.font = "30px Arial";
+     ctx.textAlign = "center";
+     ctx.fillText("PRESS ANY KEY TO START!", cw / 2, 150);
+     ctx.font = "16px Arial";
+     ctx.textAlign = "left";
+     ctx.fillText("DAMIAN ZALEWSKI", 10, 30);
+ }
+
+ function showScore() {
+     ctx.fillStyle = "white";
+     ctx.font = "30px Arial";
+     ctx.textAlign = "center";
+
+     ctx.fillText("SCORE : " + score, cw / 2, 150);
+ }
+
+ function startGame() {
+     stage = 1;
+     window.removeEventListener("keydown", startGame);
+ }
+
+ function appleCollision() {
+     var rect1 = {
+         x: path[0][0],
+         y: path[0][1],
+         width: snake.width,
+         height: snake.height
+     }
+
+
+     for (var i = 0; i <= apples.length - 1; i++) {
+         var rect2 = {
+             x: apples[i][0],
+             y: apples[i][1],
+             width: apple.width,
+             height: apple.height,
+             id: i
+         }
+
+         if (rect1.x < rect2.x + rect2.width &&
+             rect1.x + rect1.width > rect2.x &&
+             rect1.y < rect2.y + rect2.height &&
+             rect1.height + rect1.y > rect2.y) {
+             grow();
+             grow();
+             apples.splice(rect2.id, 1);
+             score += 100;
+             break;
+         }
+     };
+
+
+
+ }
+
+ function snakeCollision() {
+     var rect1 = {
+         x: path[0][0],
+         y: path[0][1],
+         width: snake.width,
+         height: snake.height
+     }
+
+
+     for (var i = 2; i <= path.length - 1; i++) {
+         var rect2 = {
+             x: path[i][0],
+             y: path[i][1],
+             width: snake.width,
+             height: snake.height,
+             id: i
+         }
+
+         if (rect1.x < rect2.x + rect2.width &&
+             rect1.x + rect1.width > rect2.x &&
+             rect1.y < rect2.y + rect2.height &&
+             rect1.height + rect1.y > rect2.y) stage = 3;
+
+
+
+     };
+ }
+
+
+
+
+
 
  function snakeMove() {
 
@@ -62,20 +204,24 @@
      if (snake.y > ch) path[0][1] = -snake.height;
 
 
+
+
+
+     if (snake.direction == 1) path[0][0] -= snake.width;
+     if (snake.direction == 2) path[0][1] -= snake.width;
+     if (snake.direction == 3) path[0][0] += snake.width;
+     if (snake.direction == 4) path[0][1] += snake.width;
+
      for (var i = snake.length - 1; i > 0; i--) {
          path[i][0] = path[i - 1][0];
          path[i][1] = path[i - 1][1];
      }
-
-
-     if (snake.direction == 1) path[0][0] -= snake.speed;
-     if (snake.direction == 2) path[0][1] -= snake.speed;
-     if (snake.direction == 3) path[0][0] += snake.speed;
-     if (snake.direction == 4) path[0][1] += snake.speed;
      snake.x = path[0][0];
      snake.y = path[0][1];
 
  }
+
+
 
  function drawSnake() {
      ctx.fillStyle = snake.backgroundColor;
@@ -97,10 +243,17 @@
 
  }
 
-function drawApple()
-{
+ function drawApple() {
+
      ctx.fillStyle = "#ff0000";
-    for(var i=0;i<apples.length;i++)
-        ctx.fillRect(apples[i][0], apples[i][1], apple.width, apple.height);
-        
-}
+     for (var i = 0; i < apples.length; i++)
+         ctx.fillRect(apples[i][0], apples[i][1], apple.width, apple.height);
+
+ }
+
+ function grow() {
+     snake.length++;
+
+     path.push([path[0][0], path[0][1]])
+
+ }
